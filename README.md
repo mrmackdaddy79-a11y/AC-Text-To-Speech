@@ -1,3 +1,4 @@
+<img width="640" height="320" alt="Text image" src="https://github.com/user-attachments/assets/e14e54f9-11e0-4dd5-a614-030ee5774f6d" />
 # AC Text To Speech
 
 A lightweight, clutter-free Text-to-Speech Decal plugin for Asheron's Call. Keep your eyes on the action (or step away from the screen entirely) while never missing an important message.
