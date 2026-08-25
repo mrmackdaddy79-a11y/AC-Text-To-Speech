@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Speech.Synthesis;
 using Decal.Adapter;
 using Decal.Adapter.Wrappers;
@@ -13,8 +13,11 @@ namespace ACTextToSpeech
     {
         private HudView view;
         private HudButton btnMaster;
-        // Added chkAlliance here
         private HudCheckBox chkDirect, chkFellow, chkVendor, chkGeneral, chkSpam, chkAlliance;
+
+        // Volume and Settings controls
+        private HudHSlider sldVolume;
+        private HudButton btnSettings;
 
         private SpeechSynthesizer synth;
         private bool masterAudioOn = true;
@@ -51,11 +54,19 @@ namespace ACTextToSpeech
                 chkVendor = (HudCheckBox)view["chkVendor"];
                 chkGeneral = (HudCheckBox)view["chkGeneral"];
                 chkSpam = (HudCheckBox)view["chkSpam"];
-
-                // Mapped the new checkbox
                 chkAlliance = (HudCheckBox)view["chkAlliance"];
 
+                // Map controls properly
+                sldVolume = (HudHSlider)view["sldVolume"];
+                btnSettings = (HudButton)view["btnSettings"];
+
+                // Set initial volume from the UI default (will be overwritten if a save file exists)
+                synth.Volume = sldVolume.Position;
+
+                // Subscribe to events
                 btnMaster.Hit += BtnMaster_Hit;
+                sldVolume.Changed += SldVolume_Changed;
+                btnSettings.Hit += BtnSettings_Hit;
                 CoreManager.Current.ChatBoxMessage += CoreManager_ChatBoxMessage;
 
                 CoreManager.Current.CharacterFilter.LoginComplete += CharacterFilter_LoginComplete;
@@ -78,6 +89,8 @@ namespace ACTextToSpeech
                 if (view != null)
                 {
                     btnMaster.Hit -= BtnMaster_Hit;
+                    sldVolume.Changed -= SldVolume_Changed;
+                    btnSettings.Hit -= BtnSettings_Hit;
                     CoreManager.Current.ChatBoxMessage -= CoreManager_ChatBoxMessage;
                     CoreManager.Current.CharacterFilter.LoginComplete -= CharacterFilter_LoginComplete;
                     view.Dispose();
@@ -99,6 +112,17 @@ namespace ACTextToSpeech
             return System.IO.Path.Combine(dllFolder, $"TTS_{serverName}_{charName}.txt");
         }
 
+        private void SaveSettings()
+        {
+            try
+            {
+                // Combines settings into one line, e.g., "True|85"
+                string saveData = $"{masterAudioOn}|{sldVolume.Position}";
+                System.IO.File.WriteAllText(GetSettingsPath(), saveData);
+            }
+            catch { }
+        }
+
         private void CharacterFilter_LoginComplete(object sender, EventArgs e)
         {
             try
@@ -107,10 +131,20 @@ namespace ACTextToSpeech
                 if (System.IO.File.Exists(path))
                 {
                     string savedState = System.IO.File.ReadAllText(path).Trim();
-                    if (savedState == "False")
+                    string[] parts = savedState.Split('|');
+
+                    // 1. Restore the Master Audio Toggle
+                    if (parts.Length > 0 && parts[0] == "False")
                     {
                         masterAudioOn = false;
                         btnMaster.Text = "Master Audio: OFF";
+                    }
+
+                    // 2. Restore the Volume Level (if it exists in the save file)
+                    if (parts.Length > 1 && int.TryParse(parts[1], out int savedVol))
+                    {
+                        sldVolume.Position = savedVol;
+                        synth.Volume = savedVol;
                     }
                 }
             }
@@ -133,11 +167,38 @@ namespace ACTextToSpeech
                 synth.SpeakAsync("Text to speech off.");
             }
 
+            SaveSettings();
+        }
+
+        private void SldVolume_Changed(int min, int max, int pos)
+        {
+            if (synth != null)
+            {
+                synth.Volume = pos;
+                SaveSettings();
+            }
+        }
+
+        private void BtnSettings_Hit(object sender, EventArgs e)
+        {
             try
             {
-                System.IO.File.WriteAllText(GetSettingsPath(), masterAudioOn.ToString());
+                // Decal is 32-bit, so we need the 32-bit SAPI voice menu to change the correct voices
+                string sapiPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.SystemX86), @"Speech\SpeechUX\sapi.cpl");
+
+                if (System.IO.File.Exists(sapiPath))
+                {
+                    System.Diagnostics.Process.Start("explorer.exe", sapiPath);
+                }
+                else
+                {
+                    System.Diagnostics.Process.Start("explorer.exe", "ms-settings:speech");
+                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                CoreManager.Current.Actions.AddChatText($"[AC TTS] Could not open settings: {ex.Message}", 5);
+            }
         }
 
         private void CoreManager_ChatBoxMessage(object sender, ChatTextInterceptEventArgs e)
@@ -153,8 +214,6 @@ namespace ACTextToSpeech
                 return;
             }
 
-            // --- REORGANIZED FILTER LOGIC ---
-            // We check brackets first now so Fellowship/Alliance don't get trapped by the "says" block!
             if (msg.StartsWith("[Fellowship]"))
             {
                 if (chkFellow.Checked) shouldRead = true;
@@ -175,7 +234,7 @@ namespace ACTextToSpeech
             {
                 if (msg.Contains(" says, \""))
                 {
-                    shouldRead = false; // Spell-cast blocker
+                    shouldRead = false;
                 }
                 else
                 {
@@ -183,7 +242,6 @@ namespace ACTextToSpeech
                 }
             }
 
-            // --- THE PROCESSOR ---
             if (shouldRead)
             {
                 string speaker = "";
@@ -210,7 +268,6 @@ namespace ACTextToSpeech
                     int idx = msg.IndexOf(" says, ");
                     speaker = msg.Substring(0, idx).Trim();
 
-                    // Strip the new channel brackets before she speaks
                     if (speaker.StartsWith("[Fellowship]"))
                     {
                         speaker = speaker.Replace("[Fellowship]", "").Trim();
