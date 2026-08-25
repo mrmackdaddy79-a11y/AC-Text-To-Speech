@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+﻿<?xml version="1.0"?>
 <view icon="29808" title="Chat Reader" width="320" height="310">
 	<control progid="DecalControls.FixedLayout" name="mainLayout" left="0" top="0" width="320" height="310">
 

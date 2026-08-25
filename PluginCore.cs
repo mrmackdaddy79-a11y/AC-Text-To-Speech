@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Speech.Synthesis;
+using System.Text.RegularExpressions; // Added for the text scrubber
 using Decal.Adapter;
 using Decal.Adapter.Wrappers;
 using VirindiViewService;
@@ -15,7 +16,6 @@ namespace ACTextToSpeech
         private HudButton btnMaster;
         private HudCheckBox chkDirect, chkFellow, chkVendor, chkGeneral, chkSpam, chkAlliance;
 
-        // Volume and Settings controls
         private HudHSlider sldVolume;
         private HudButton btnSettings;
 
@@ -56,14 +56,11 @@ namespace ACTextToSpeech
                 chkSpam = (HudCheckBox)view["chkSpam"];
                 chkAlliance = (HudCheckBox)view["chkAlliance"];
 
-                // Map controls properly
                 sldVolume = (HudHSlider)view["sldVolume"];
                 btnSettings = (HudButton)view["btnSettings"];
 
-                // Set initial volume from the UI default (will be overwritten if a save file exists)
                 synth.Volume = sldVolume.Position;
 
-                // Subscribe to events
                 btnMaster.Hit += BtnMaster_Hit;
                 sldVolume.Changed += SldVolume_Changed;
                 btnSettings.Hit += BtnSettings_Hit;
@@ -116,7 +113,6 @@ namespace ACTextToSpeech
         {
             try
             {
-                // Combines settings into one line, e.g., "True|85"
                 string saveData = $"{masterAudioOn}|{sldVolume.Position}";
                 System.IO.File.WriteAllText(GetSettingsPath(), saveData);
             }
@@ -133,14 +129,12 @@ namespace ACTextToSpeech
                     string savedState = System.IO.File.ReadAllText(path).Trim();
                     string[] parts = savedState.Split('|');
 
-                    // 1. Restore the Master Audio Toggle
                     if (parts.Length > 0 && parts[0] == "False")
                     {
                         masterAudioOn = false;
                         btnMaster.Text = "Master Audio: OFF";
                     }
 
-                    // 2. Restore the Volume Level (if it exists in the save file)
                     if (parts.Length > 1 && int.TryParse(parts[1], out int savedVol))
                     {
                         sldVolume.Position = savedVol;
@@ -183,7 +177,6 @@ namespace ACTextToSpeech
         {
             try
             {
-                // Decal is 32-bit, so we need the 32-bit SAPI voice menu to change the correct voices
                 string sapiPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.SystemX86), @"Speech\SpeechUX\sapi.cpl");
 
                 if (System.IO.File.Exists(sapiPath))
@@ -205,10 +198,12 @@ namespace ACTextToSpeech
         {
             if (!masterAudioOn) return;
 
-            string msg = e.Text.Trim();
-            bool shouldRead = false;
+            // NEW SCRUBBER: This strips all <tell:IIDString...> formatting tags so the synth only sees pure text
+            string msg = Regex.Replace(e.Text.Trim(), "<[^>]+>", string.Empty);
 
+            bool shouldRead = false;
             string lowerMsg = msg.ToLower();
+
             if (lowerMsg.Contains("channel") && (lowerMsg.Contains("join") || lowerMsg.Contains("left") || lowerMsg.Contains("leaving")))
             {
                 return;
