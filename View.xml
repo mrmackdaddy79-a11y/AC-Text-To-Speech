@@ -1,21 +1,25 @@
-﻿<?xml version="1.0"?>
-<view icon="29808" title="Chat Reader" width="220" height="260">
-	<control progid="DecalControls.FixedLayout" name="mainLayout" left="0" top="0" width="220" height="260">
+<?xml version="1.0"?>
+<view icon="29808" title="Chat Reader" width="320" height="310">
+	<control progid="DecalControls.FixedLayout" name="mainLayout" left="0" top="0" width="320" height="310">
 
-		<control progid="DecalControls.PushButton" name="btnMaster" text="Master Audio: ON" left="10" top="10" width="200" height="30" />
-		<control progid="DecalControls.StaticText" name="lblFilters" text="Read these channels:" left="10" top="50" width="200" height="15" />
+		<control progid="DecalControls.PushButton" name="btnMaster" text="Master Audio: ON" left="10" top="10" width="300" height="20" />
 
-		<control progid="DecalControls.Checkbox" name="chkDirect" text="Tells / Direct Messages" left="10" top="70" width="200" height="20" checked="true" />
-		<control progid="DecalControls.Checkbox" name="chkFellow" text="Fellowship" left="10" top="90" width="200" height="20" checked="true" />
-		<control progid="DecalControls.Checkbox" name="chkVendor" text="Vendor / NPCs" left="10" top="110" width="200" height="20" checked="true" />
+		<control progid="DecalControls.StaticText" name="lblFilters" text="Read these channels:" left="10" top="30" width="300" height="20" />
+		<control progid="DecalControls.Checkbox" name="chkDirect" text="Tells / Direct Messages" left="10" top="50" width="200" height="20" checked="true" />
+		<control progid="DecalControls.Checkbox" name="chkFellow" text="Fellowship" left="10" top="70" width="200" height="20" checked="true" />
+		<control progid="DecalControls.Checkbox" name="chkVendor" text="Vendor / NPCs" left="10" top="90" width="200" height="20" checked="true" />
 
-		<!-- NEW ALLIANCE CHECKBOX -->
-		<control progid="DecalControls.Checkbox" name="chkAlliance" text="Alliance / Allegiance" left="10" top="130" width="200" height="20" checked="true" />
+		<!-- ALLIANCE CHECKBOX -->
+		<control progid="DecalControls.Checkbox" name="chkAlliance" text="Alliance / Allegiance" left="10" top="110" width="200" height="20" checked="true" />
+		<control progid="DecalControls.Checkbox" name="chkGeneral" text="General Chat" left="10" top="130" width="200" height="20" checked="false" />
 
-		<control progid="DecalControls.Checkbox" name="chkGeneral" text="General Chat" left="10" top="150" width="200" height="20" checked="false" />
+		<control progid="DecalControls.StaticText" name="lblSpam" text="Advanced Options:" left="10" top="160" width="300" height="15" />
+		<control progid="DecalControls.Checkbox" name="chkSpam" text="Block Identical Repeats" left="10" top="180" width="200" height="20" checked="true" />
 
-		<control progid="DecalControls.StaticText" name="lblSpam" text="Advanced Options:" left="10" top="190" width="200" height="15" />
-		<control progid="DecalControls.Checkbox" name="chkSpam" text="Block Identical Repeats" left="10" top="210" width="200" height="20" checked="true" />
+		<!-- NEW VOLUME & SETTINGS -->
+		<control progid="DecalControls.StaticText" name="lblVol" text="Volume:" left="10" top="210" width="50" height="20" />
+		<control progid="DecalControls.Slider" name="sldVolume" left="60" top="210" width="140" height="20" minimum="0" maximum="100" position="100" />
+		<control progid="DecalControls.PushButton" name="btnSettings" text="Open Windows Voice Settings" left="10" top="240" width="200" height="20" />
 
 	</control>
 </view>
